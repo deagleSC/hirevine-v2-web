@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { FullScreenAppLoader } from "@/components/layout/full-screen-app-loader";
 import { homePathForRole } from "@/lib/auth/home-path";
 import { authServices } from "@/store/zustand/services/auth-services";
 import { useAuthStore } from "@/store";
@@ -86,6 +87,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [pathname, isAuthenticated, isInitialized, router, user]);
 
   if (!isInitialized) {
+    if (pathname === "/" || pathname === "") {
+      return <FullScreenAppLoader />;
+    }
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-b-transparent" />

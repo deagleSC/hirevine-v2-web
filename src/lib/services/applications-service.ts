@@ -2,6 +2,10 @@ import { API_ROUTES } from "@/lib/configs/api";
 import { api } from "@/lib/utils/api-client";
 import { handleError } from "@/lib/utils/handleError";
 import type {
+  CandidateDashboardAnalytics,
+  RecruiterDashboardAnalytics,
+} from "@/types/analytics.types";
+import type {
   ApplicationListItem,
   ApplicationRun,
   CandidateApplicationDetail,
@@ -9,6 +13,40 @@ import type {
   PublicQuizQuestion,
   RecruiterApplicationDetail,
 } from "@/types/applications.types";
+
+export async function getRecruiterDashboardAnalytics(): Promise<RecruiterDashboardAnalytics> {
+  try {
+    const res = await api.get(API_ROUTES.APPLICATIONS.ANALYTICS_ORG);
+    const data = res.data?.data as RecruiterDashboardAnalytics | undefined;
+    if (
+      !data ||
+      !Array.isArray(data.applicationsByStatus) ||
+      !Array.isArray(data.applicationsByDay)
+    ) {
+      throw new Error("Invalid response");
+    }
+    return data;
+  } catch (e) {
+    throw new Error(handleError(e));
+  }
+}
+
+export async function getCandidateDashboardAnalytics(): Promise<CandidateDashboardAnalytics> {
+  try {
+    const res = await api.get(API_ROUTES.APPLICATIONS.ANALYTICS_ME);
+    const data = res.data?.data as CandidateDashboardAnalytics | undefined;
+    if (
+      !data ||
+      !Array.isArray(data.applicationsByStatus) ||
+      !Array.isArray(data.applicationsByDay)
+    ) {
+      throw new Error("Invalid response");
+    }
+    return data;
+  } catch (e) {
+    throw new Error(handleError(e));
+  }
+}
 
 export async function listMyApplications(): Promise<ApplicationListItem[]> {
   try {

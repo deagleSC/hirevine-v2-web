@@ -1,33 +1,34 @@
-import { Briefcase } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface HirevineMarkProps {
   className?: string;
+  /** Extra classes for the image element (e.g. opacity). */
   iconClassName?: string;
-  /** Approximate total height in px for the icon tile. */
+  /** Width and height in px. */
   size?: number;
+  /** LCP / above-the-fold surfaces (e.g. auth shell). */
+  priority?: boolean;
 }
 
 export function HirevineMark({
   className,
   iconClassName,
   size = 64,
+  priority = false,
 }: HirevineMarkProps) {
-  const iconPx = Math.round(size * 0.45);
   return (
-    <div
+    <Image
+      src="/app-logo.png"
+      alt="Hirevine"
+      width={size}
+      height={size}
       className={cn(
-        "bg-primary text-primary-foreground inline-flex items-center justify-center rounded-xl shadow-sm",
+        "rounded-xl object-cover shadow-sm",
+        iconClassName,
         className,
       )}
-      style={{ width: size, height: size }}
-    >
-      <Briefcase
-        className={cn("shrink-0", iconClassName)}
-        aria-hidden
-        width={iconPx}
-        height={iconPx}
-      />
-    </div>
+      priority={priority}
+    />
   );
 }

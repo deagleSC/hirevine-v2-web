@@ -77,16 +77,16 @@ export default function CandidateApplicationsPage() {
       {rows.length === 0 ? (
         <EmptyState
           title="You have not applied to a role yet"
-          description="When you find a good match on the job board, upload your resume and send one application per listing. Your progress will show up here."
+          description="Use a job link shared by the employer to open a posting, upload your resume, and apply. Your progress will show up here."
         >
           <Link
-            href="/jobs"
+            href="/candidate"
             className={cn(
               buttonVariants({ variant: "default" }),
               "no-underline",
             )}
           >
-            Browse open roles
+            Back to dashboard
           </Link>
         </EmptyState>
       ) : (

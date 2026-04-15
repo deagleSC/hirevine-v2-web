@@ -9,7 +9,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
     <div className="flex min-h-screen">
       <div className="from-primary/10 via-primary/5 to-background hidden w-1/2 items-center justify-center bg-gradient-to-br p-8 lg:flex">
         <div className="flex flex-col items-center gap-6">
-          <HirevineMark size={96} />
+          <HirevineMark size={96} priority />
           <div className="text-center">
             <p className="text-lg font-semibold tracking-tight">Hirevine</p>
             <p className="text-muted-foreground mt-2 max-w-sm text-sm">
@@ -24,7 +24,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="w-full max-w-md space-y-3 sm:space-y-4">
           <div className="mb-6">
             <div className="mb-4 flex justify-center lg:hidden">
-              <HirevineMark size={64} />
+              <HirevineMark size={64} priority />
             </div>
             <h1 className="mb-2 text-2xl font-bold">Welcome</h1>
             <p className="text-muted-foreground text-sm">

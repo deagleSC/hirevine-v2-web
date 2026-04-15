@@ -1,100 +1,189 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { browseJobs } from "@/lib/services/jobs-service";
-import { jobPostingStatusLabel } from "@/lib/applications/candidate-copy";
+import { useRouter, useSearchParams } from "next/navigation";
+import { listActiveJobsCatalog } from "@/lib/services/jobs-service";
 import type { PublicJob } from "@/types/jobs.types";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
-import { buttonVariants } from "@/components/ui/button-variants";
+import { ReadMoreText } from "@/components/ui/read-more-text";
 import { cn } from "@/lib/utils";
 
-function formatPosted(iso?: string) {
-  if (!iso) return null;
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return null;
-  }
-}
+const SEARCH_DEBOUNCE_MS = 300;
+const PAGE_SIZE = 20;
+/** Start loading the next page before the sentinel hits the viewport. */
+const SCROLL_ROOT_MARGIN = "280px";
 
-export default function JobsBrowsePage() {
-  const [jobs, setJobs] = useState<PublicJob[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+function JobsCatalogContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const q = (searchParams.get("q") ?? "").trim();
+
+  const [qDraft, setQDraft] = useState(q);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    setQDraft(q);
+  }, [q]);
+
+  const setSearchInUrl = useCallback(
+    (nextQ: string) => {
+      const trimmed = nextQ.trim();
+      const p = new URLSearchParams();
+      if (trimmed) p.set("q", trimmed);
+      const qs = p.toString();
+      router.push(qs ? `/jobs?${qs}` : "/jobs");
+    },
+    [router],
+  );
+
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+
+    const trimmed = qDraft.trim();
+    if (trimmed === q) {
+      return undefined;
+    }
+
+    searchDebounceRef.current = setTimeout(() => {
+      searchDebounceRef.current = null;
+      setSearchInUrl(trimmed);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
+      }
+    };
+  }, [qDraft, q, setSearchInUrl]);
+
+  const [jobs, setJobs] = useState<PublicJob[]>([]);
+  const [pageLoaded, setPageLoaded] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const listEpochRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+
+  useEffect(() => {
+    listEpochRef.current += 1;
+    const epoch = listEpochRef.current;
+    setJobs([]);
+    setPageLoaded(0);
+    setTotalPages(0);
+    setInitialLoading(true);
+    setError(null);
+    loadingMoreRef.current = false;
+
     (async () => {
       try {
-        const list = await browseJobs();
-        if (!cancelled) setJobs(list);
+        const res = await listActiveJobsCatalog({
+          page: 1,
+          limit: PAGE_SIZE,
+          ...(q ? { q } : {}),
+        });
+        if (epoch !== listEpochRef.current) return;
+        setJobs(res.jobs);
+        setPageLoaded(1);
+        setTotalPages(res.totalPages);
+        setError(null);
       } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Could not load jobs");
+        if (epoch !== listEpochRef.current) return;
+        setError(e instanceof Error ? e.message : "Could not load jobs");
+        setJobs([]);
+        setPageLoaded(0);
+        setTotalPages(0);
+      } finally {
+        if (epoch === listEpochRef.current) {
+          setInitialLoading(false);
         }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  }, [q]);
 
-  if (error) {
+  const hasMore = totalPages > 0 && pageLoaded < totalPages;
+
+  const loadNextPage = useCallback(async () => {
+    if (loadingMoreRef.current || initialLoading) return;
+    if (!hasMore) return;
+
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    setError(null);
+    const epoch = listEpochRef.current;
+    const nextPage = pageLoaded + 1;
+
+    try {
+      const res = await listActiveJobsCatalog({
+        page: nextPage,
+        limit: PAGE_SIZE,
+        ...(q ? { q } : {}),
+      });
+      if (epoch !== listEpochRef.current) return;
+      setJobs((prev) => [...prev, ...res.jobs]);
+      setPageLoaded(nextPage);
+      setTotalPages(res.totalPages);
+      setError(null);
+    } catch (e) {
+      if (epoch !== listEpochRef.current) return;
+      setError(e instanceof Error ? e.message : "Could not load more jobs");
+    } finally {
+      loadingMoreRef.current = false;
+      if (epoch === listEpochRef.current) {
+        setLoadingMore(false);
+      }
+    }
+  }, [hasMore, initialLoading, pageLoaded, q]);
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting);
+        if (hit) void loadNextPage();
+      },
+      { root: null, rootMargin: SCROLL_ROOT_MARGIN, threshold: 0 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadNextPage]);
+
+  if (error && jobs.length === 0 && !initialLoading) {
     return (
-      <div className="mx-auto max-w-md space-y-4 py-4">
+      <div className="space-y-3">
         <h1 className="text-xl font-semibold tracking-tight">
-          Could not load job listings
+          Could not load job postings
         </h1>
-        <p className="text-muted-foreground text-sm">{error}</p>
-        <p className="text-muted-foreground text-sm">
-          Check that the Hirevine API is running and{" "}
-          <code className="bg-muted rounded px-1 py-0.5 text-xs">
-            NEXT_PUBLIC_API_URL
-          </code>{" "}
-          points to it. If you are offline, reconnect and refresh this page.
-        </p>
-        <div className="flex flex-wrap gap-2 pt-2">
-          <button
-            type="button"
-            className={cn(buttonVariants({ variant: "outline" }), "text-sm")}
-            onClick={() => window.location.reload()}
-          >
-            Try again
-          </button>
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: "default" }), "text-sm")}
-          >
-            Sign in
-          </Link>
-        </div>
+        <p className="text-destructive text-sm">{error}</p>
       </div>
     );
   }
 
-  if (jobs === null) {
+  if (initialLoading && jobs.length === 0) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
-          <Skeleton className="h-9 w-64" />
-          <Skeleton className="h-4 max-w-xl" />
+          <Skeleton className="h-9 w-56" />
+          <Skeleton className="h-4 w-full max-w-xl" />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-xl" />
-          ))}
+        <Skeleton className="h-10 w-full max-w-md" />
+        <div className="space-y-3">
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
         </div>
       </div>
     );
@@ -103,63 +192,104 @@ export default function JobsBrowsePage() {
   return (
     <div className="space-y-8">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Open roles you can apply to
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Browse jobs</h1>
         <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
-          These are active postings from employers using Hirevine. Select a role
-          to read details, upload your resume, and start an application. You
-          will need a candidate account to apply.
+          Active postings you can open to read the full description and apply
+          with your resume. Scroll down to load more.
         </p>
       </header>
 
-      {jobs.length === 0 ? (
-        <EmptyState
-          title="No open roles right now"
-          description="When employers publish active jobs, they will appear here. You can still review your existing applications from the sidebar."
+      <div className="max-w-md space-y-2">
+        <Label htmlFor="jobs-q">Search by title</Label>
+        <Input
+          id="jobs-q"
+          value={qDraft}
+          onChange={(e) => setQDraft(e.target.value)}
+          placeholder="e.g. engineer, analyst…"
+          autoComplete="off"
         />
+      </div>
+
+      {error && jobs.length > 0 ? (
+        <p className="text-destructive text-sm" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {jobs.length === 0 && !initialLoading ? (
+        <p className="text-muted-foreground text-sm">
+          {q
+            ? "No active jobs match that search."
+            : "There are no active job postings right now."}
+        </p>
       ) : (
-        <>
-          <p className="text-muted-foreground text-sm">
-            Showing{" "}
-            <span className="text-foreground font-medium">{jobs.length}</span>{" "}
-            active {jobs.length === 1 ? "role" : "roles"}.
-          </p>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((job) => {
-              const posted = formatPosted(job.createdAt);
-              return (
-                <li key={job.id}>
-                  <Link
-                    href={`/jobs/${job.id}`}
-                    className="group block h-full no-underline"
-                  >
-                    <Card className="h-full transition-colors group-hover:bg-muted/40">
-                      <CardHeader className="space-y-3">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <CardTitle className="text-base leading-snug">
-                            {job.title}
-                          </CardTitle>
-                          {job.status === "active" && (
-                            <Badge variant="secondary" className="shrink-0">
-                              Hiring
-                            </Badge>
-                          )}
-                        </div>
-                        <CardDescription className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
-                          {jobPostingStatusLabel(job.status)}
-                          {posted ? ` · Listed ${posted}` : ""}. Open the role
-                          to apply with your resume.
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </>
+        <ul className="flex flex-col gap-4">
+          {jobs.map((job: PublicJob) => (
+            <li key={job.id}>
+              <Link
+                href={`/jobs/${job.id}`}
+                className={cn(
+                  "bg-muted/35 hover:bg-muted/55 focus-visible:ring-ring block rounded-lg border border-transparent p-4 shadow-sm transition-colors",
+                  "focus-visible:ring-2 focus-visible:outline-none",
+                )}
+              >
+                <h2 className="text-base font-semibold tracking-tight">
+                  {job.title}
+                </h2>
+                {job.description?.trim() ? (
+                  <div className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                    <ReadMoreText
+                      text={job.description.trim()}
+                      collapsedMaxChars={220}
+                    />
+                  </div>
+                ) : null}
+                <span className="text-primary mt-3 inline-block text-sm font-medium">
+                  View posting →
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
+
+      {jobs.length > 0 && hasMore ? (
+        <div
+          ref={sentinelRef}
+          className="flex min-h-12 items-center justify-center py-4"
+          aria-hidden
+        >
+          {loadingMore ? (
+            <span className="text-muted-foreground text-sm">Loading more…</span>
+          ) : (
+            <span className="text-muted-foreground sr-only">
+              Load more jobs
+            </span>
+          )}
+        </div>
+      ) : null}
+
+      {jobs.length > 0 && !hasMore && !initialLoading ? (
+        <p className="text-muted-foreground text-center text-sm">
+          You have reached the end of the list.
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+export default function JobsCatalogPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-6">
+          <Skeleton className="h-9 w-56" />
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+        </div>
+      }
+    >
+      <JobsCatalogContent />
+    </Suspense>
   );
 }

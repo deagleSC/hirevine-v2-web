@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, User } from "lucide-react";
+import { Building2, ChevronsUpDown, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -22,14 +22,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ClientOnly } from "@/components/shared/client-only";
-import { dashboardHomeHref } from "@/components/navigation/nav-items";
+import { profilePathForRole } from "@/lib/auth/home-path";
 import { authActions, useAuthStore } from "@/store";
 
 export function NavUser() {
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   const { user } = useAuthStore();
-  const homeHref = dashboardHomeHref(user);
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -41,8 +40,10 @@ export function NavUser() {
     return null;
   }
 
-  const displayName = user.email;
-  const avatarFallback = user.email[0]?.toUpperCase() ?? "?";
+  const primaryLabel = user.displayName.trim() || user.email;
+  const avatarFallback =
+    (user.displayName.trim() || user.email)[0]?.toUpperCase() ?? "?";
+  const profileHref = profilePathForRole(user.role);
 
   const handleLogout = async () => {
     try {
@@ -60,11 +61,11 @@ export function NavUser() {
       className="data-[state=open]:bg-card data-[state=open]:text-card-foreground"
     >
       <Avatar className="size-8 rounded-lg">
-        <AvatarImage src="" alt={displayName} />
+        <AvatarImage src="" alt={primaryLabel} />
         <AvatarFallback className="rounded-lg">{avatarFallback}</AvatarFallback>
       </Avatar>
       <div className="grid flex-1 text-left text-sm leading-tight">
-        <span className="truncate font-medium">{displayName}</span>
+        <span className="truncate font-medium">{primaryLabel}</span>
         <span className="text-muted-foreground truncate text-xs capitalize">
           {user.role}
         </span>
@@ -88,13 +89,13 @@ export function NavUser() {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="size-8 rounded-lg">
-                    <AvatarImage src="" alt={displayName} />
+                    <AvatarImage src="" alt={primaryLabel} />
                     <AvatarFallback className="rounded-lg">
                       {avatarFallback}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{displayName}</span>
+                    <span className="truncate font-medium">{primaryLabel}</span>
                     <span className="text-muted-foreground truncate text-xs capitalize">
                       {user.role}
                     </span>
@@ -103,10 +104,21 @@ export function NavUser() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
+                {user.role === "recruiter" || user.role === "admin" ? (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/recruiter/organization"
+                      onClick={handleNavClick}
+                    >
+                      <Building2 />
+                      Organization
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem asChild>
-                  <Link href={homeHref} onClick={handleNavClick}>
-                    <User />
-                    Dashboard
+                  <Link href={profileHref} onClick={handleNavClick}>
+                    <UserRound />
+                    Profile
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>

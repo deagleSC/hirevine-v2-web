@@ -29,6 +29,11 @@ export const metadata: Metadata = {
   },
   description:
     "Hiring automation: jobs, applications, and evaluation pipelines.",
+  icons: {
+    icon: [{ url: "/app-logo.png", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/app-logo.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/app-logo.png",
+  },
   robots: {
     index: true,
     follow: true,

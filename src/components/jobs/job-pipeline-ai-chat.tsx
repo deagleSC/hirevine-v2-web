@@ -194,7 +194,7 @@ export function JobPipelineAiChat({
   return (
     <div
       className={cn(
-        "border-border bg-card text-card-foreground flex min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden rounded-xl border shadow-sm",
+        "bg-card text-card-foreground flex min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden rounded-xl shadow-sm",
         /* Stacked / tablet: definite height so the thread scrolls inside, not the page. */
         "h-[min(26rem,56dvh)] max-h-[min(40rem,78dvh)]",
         "sm:h-[min(28rem,58dvh)] sm:max-h-[min(42rem,80dvh)]",

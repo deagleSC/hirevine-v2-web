@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { listOrgJobs } from "@/lib/services/jobs-service";
@@ -26,6 +33,7 @@ import { cn } from "@/lib/utils";
 
 const SELECT_VALUE_ALL = "__all__";
 const JOB_STATUSES: JobStatus[] = ["draft", "active", "paused", "closed"];
+const SEARCH_DEBOUNCE_MS = 300;
 
 function RecruiterJobsListContent() {
   const router = useRouter();
@@ -40,6 +48,8 @@ function RecruiterJobsListContent() {
   const q = (searchParams.get("q") ?? "").trim();
 
   const [qDraft, setQDraft] = useState(q);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     setQDraft(q);
   }, [q]);
@@ -62,6 +72,30 @@ function RecruiterJobsListContent() {
     },
     [router, page, statusFilter, q],
   );
+
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+
+    const trimmed = qDraft.trim();
+    if (trimmed === q) {
+      return undefined;
+    }
+
+    searchDebounceRef.current = setTimeout(() => {
+      searchDebounceRef.current = null;
+      setQuery({ page: 1, q: trimmed });
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
+      }
+    };
+  }, [qDraft, q, setQuery]);
 
   const fetchList = useCallback(async () => {
     if (!user?.organizationId) {
@@ -123,10 +157,6 @@ function RecruiterJobsListContent() {
     );
   }
 
-  const applySearch = () => {
-    setQuery({ page: 1, q: qDraft.trim() });
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -178,34 +208,44 @@ function RecruiterJobsListContent() {
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:max-w-md">
           <Label htmlFor="filter-job-q">Search title</Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               id="filter-job-q"
+              type="search"
+              enterKeyHint="search"
               value={qDraft}
               onChange={(e) => setQDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  applySearch();
+                  if (searchDebounceRef.current) {
+                    clearTimeout(searchDebounceRef.current);
+                    searchDebounceRef.current = null;
+                  }
+                  const trimmed = qDraft.trim();
+                  if (trimmed !== q) setQuery({ page: 1, q: trimmed });
                 }
               }}
               placeholder="Keyword in job title…"
               className="min-w-[10rem] flex-1"
+              aria-label="Search job posts by title"
+              autoComplete="off"
             />
-            <Button type="button" variant="secondary" onClick={applySearch}>
-              Search
-            </Button>
-            {q ? (
+            {q || qDraft.trim() ? (
               <Button
                 type="button"
                 variant="ghost"
-                className="text-muted-foreground"
+                className="text-muted-foreground shrink-0"
                 onClick={() => {
+                  if (searchDebounceRef.current) {
+                    clearTimeout(searchDebounceRef.current);
+                    searchDebounceRef.current = null;
+                  }
                   setQDraft("");
                   setQuery({ page: 1, q: "" });
                 }}
               >
-                Clear text
+                Clear
               </Button>
             ) : null}
           </div>

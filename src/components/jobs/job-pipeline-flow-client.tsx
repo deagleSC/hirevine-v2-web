@@ -178,10 +178,9 @@ function PipelineStepNode({ data }: NodeProps<Node<PipelineStepNodeData>>) {
   return (
     <div
       className={cn(
-        "bg-card text-card-foreground border-border relative w-[min(100vw-3rem,260px)] rounded-lg border px-3 py-3 text-left shadow-sm transition-[box-shadow,background-color,border-color]",
+        "bg-card text-card-foreground relative w-[min(100vw-3rem,260px)] rounded-lg px-3 py-3 text-left shadow-sm transition-[box-shadow,background-color]",
         "nodrag nopan",
-        isExpanded &&
-          "border-primary/50 bg-primary/[0.06] shadow-md ring-2 ring-primary/35",
+        isExpanded && "bg-primary/[0.06] shadow-md ring-2 ring-primary/35",
       )}
     >
       <Handle
@@ -452,11 +451,11 @@ export function JobPipelineFlowClient({ pipeline }: { pipeline: unknown }) {
         <div
           ref={flowContainerRef}
           className={cn(
-            "bg-muted/20 border-border relative min-h-0 min-w-0 flex-1 basis-0 overflow-hidden rounded-lg border",
+            "bg-muted/20 relative min-h-0 min-w-0 flex-1 basis-0 overflow-hidden rounded-lg",
             "w-full max-w-full",
             flowMinH,
             flowH,
-            openNodeId && isLg && "lg:rounded-r-none lg:border-r-0",
+            openNodeId && isLg && "lg:rounded-r-none",
           )}
         >
           <ReactFlow
@@ -486,7 +485,7 @@ export function JobPipelineFlowClient({ pipeline }: { pipeline: unknown }) {
               patternClassName="opacity-[0.15]"
             />
             <Controls
-              className="!border-border !bg-card !shadow-md [&_button]:!border-border [&_button]:!bg-card"
+              className="!border-0 !bg-card !shadow-md [&_button]:!border-0 [&_button]:!bg-card"
               showInteractive={false}
             />
             <RefitOnDetailsPanelChange layoutKey={openNodeId ?? "closed"} />
@@ -499,9 +498,9 @@ export function JobPipelineFlowClient({ pipeline }: { pipeline: unknown }) {
             role="region"
             aria-labelledby={panelTitleId}
             className={cn(
-              "bg-card border-border flex min-h-0 w-full max-w-full shrink-0 flex-col overflow-hidden rounded-lg border",
+              "bg-card flex min-h-0 w-full max-w-full shrink-0 flex-col overflow-hidden rounded-lg shadow-sm",
               "lg:h-[min(32rem,75vh)] lg:w-80 lg:max-w-[min(100%,26rem)] xl:w-96",
-              "lg:rounded-l-none lg:rounded-r-lg lg:border-l",
+              "lg:rounded-l-none lg:rounded-r-lg",
             )}
           >
             <PipelineStepDetailBody

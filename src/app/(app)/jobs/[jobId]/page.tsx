@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { applyToJob, getJob } from "@/lib/services/jobs-service";
 import { uploadResume } from "@/lib/services/resumes-service";
 import { jobPostingStatusLabel } from "@/lib/applications/candidate-copy";
+import { dashboardHomeHref } from "@/components/navigation/nav-items";
 import { useAuthStore } from "@/store";
 import type { PublicJob } from "@/types/jobs.types";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -100,10 +101,10 @@ export default function JobDetailPage() {
           The job may have been removed, closed, or the link may be incorrect.
         </p>
         <Link
-          href="/jobs"
+          href={dashboardHomeHref(user ?? null)}
           className={cn(buttonVariants({ variant: "outline" }), "inline-flex")}
         >
-          Back to all open roles
+          Back to home
         </Link>
       </div>
     );
@@ -127,10 +128,10 @@ export default function JobDetailPage() {
     <div className=" space-y-10">
       <div>
         <Link
-          href="/jobs"
+          href={dashboardHomeHref(user ?? null)}
           className="text-muted-foreground hover:text-foreground -ml-1 rounded-md px-1 py-0.5 text-sm transition-colors hover:bg-muted/60"
         >
-          ← All open roles
+          ← Home
         </Link>
         <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">

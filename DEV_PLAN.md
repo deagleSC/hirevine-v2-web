@@ -86,7 +86,7 @@ Centralize paths in `src/lib/configs/api.ts` as `API_ROUTES` (same pattern as Re
 |--------|----------------------------------|
 | Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` |
 | Organizations | `POST /organizations`, `GET /organizations` (and org-scoped details per OpenAPI) |
-| Jobs | Public list + detail; recruiter `GET /jobs` (paginated: `page`, `limit`, `status`, `q`), `GET /jobs/options` (id/title for filters), `POST`, `PATCH`, `POST .../generate-pipeline`, `POST .../:jobId/apply`, list applications per job |
+| Jobs | Public job detail + apply (`GET`/`POST /jobs/:jobId`); recruiter `GET /jobs` (paginated: `page`, `limit`, `status`, `q`), `GET /jobs/options` (id/title for filters), `POST`, `PATCH`, `POST .../generate-pipeline`, list applications per job |
 | Resumes | `POST /resumes/upload` (multipart) |
 | Applications | Candidate: `GET /applications/me`, `GET /applications/:id`, quiz `GET`/`POST .../quiz`; Recruiter: `GET /applications` with query params |
 
@@ -177,14 +177,14 @@ Copy `.env.example` → `.env.local`; run API on `NEXT_PUBLIC_API_URL` (default 
 
 ### Phase 2 — Candidate core
 
-- [x] Public jobs list (`GET /api/jobs/browse`) and job detail (`GET /api/jobs/:jobId`).
+- [x] Job detail for apply (`GET /api/jobs/:jobId`; no public job board list).
 - [x] Resume upload (`POST /api/resumes/upload` via `fetch` + `FormData`; requires `BLOB_READ_WRITE_TOKEN` on API).
 - [x] Apply (`POST /api/jobs/:jobId/apply`) for candidates with Blob `resumeUrl`.
 - [x] `GET /api/applications/me` list with links to detail.
 - [x] Application detail: status, `nextStep`; **poll every 5s** while status is `NODE_1_PENDING` or `NODE_3_PENDING` (candidate view — no evaluation trail in UI; API omits `nodes` for candidates).
 - [x] Quiz: `GET`/`POST /api/applications/:id/quiz` (multiple choice + short answer).
 
-**Layout:** RentFit-style shell in **`src/app/(app)/layout.tsx`**: `SidebarProvider` + `DashboardLayout` wraps **`/`**, **`/jobs`**, **`/candidate/*`**, **`/recruiter/*`** (login/signup stay on `AuthLayout` only). **`getMainNavItems()`** in `src/components/navigation/nav-items.ts` is the single nav source for guests, candidates, and recruiters/admins.
+**Layout:** RentFit-style shell in **`src/app/(app)/layout.tsx`**: `SidebarProvider` + `DashboardLayout` wraps **`/`**, **`/jobs/[jobId]`** (posting + apply), **`/candidate/*`**, **`/recruiter/*`** (login/signup stay on `AuthLayout` only). **`getMainNavItems()`** in `src/components/navigation/nav-items.ts` is the single nav source for guests, candidates, and recruiters/admins.
 
 ### Phase 3 — Recruiter / admin
 
@@ -236,7 +236,7 @@ Copy `.env.example` → `.env.local`; run API on `NEXT_PUBLIC_API_URL` (default 
 
 | RentFit | Hirevine |
 |---------|----------|
-| `/search`, `/profile` | `/candidate/...`, `/recruiter/...`, `/jobs` |
+| `/search`, `/profile` | `/candidate/...`, `/recruiter/...`, `/jobs/[jobId]` (direct links) |
 | Listings / map / chat | Jobs, applications, resume, quiz |
 | `role: renter \| owner` | `role: candidate \| recruiter \| admin` |
 | `API_ROUTES.LISTINGS`, `CHAT` | `API_ROUTES.JOBS`, `APPLICATIONS`, `ORGANIZATIONS`, `RESUMES` |

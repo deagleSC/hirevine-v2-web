@@ -14,7 +14,11 @@ function unwrapUser(payload: unknown): User {
     "user" in payload &&
     (payload as { user: User }).user
   ) {
-    return (payload as { user: User }).user;
+    const u = (payload as { user: User }).user;
+    return {
+      ...u,
+      displayName: typeof u.displayName === "string" ? u.displayName : "",
+    };
   }
   throw new Error("Invalid auth response");
 }
@@ -49,6 +53,19 @@ export const authServices = {
   getMe: async (): Promise<User> => {
     try {
       const response = await api.get(API_ROUTES.AUTH.ME);
+      return unwrapUser(response.data.data);
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  },
+
+  patchMe: async (body: {
+    displayName?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }): Promise<User> => {
+    try {
+      const response = await api.patch(API_ROUTES.AUTH.ME, body);
       return unwrapUser(response.data.data);
     } catch (error) {
       throw new Error(handleError(error));

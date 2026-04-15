@@ -33,3 +33,42 @@ export async function createOrganization(body: {
     throw new Error(handleError(e));
   }
 }
+
+export async function joinOrganizationBySlug(body: {
+  slug: string;
+}): Promise<{ organization: Organization; user: User }> {
+  try {
+    const res = await api.post(API_ROUTES.ORGANIZATIONS.JOIN, body);
+    const data = res.data?.data as
+      | { organization?: Organization; user?: User }
+      | undefined;
+    if (!data?.organization?.id || !data.user?.id) {
+      throw new Error("Invalid response");
+    }
+    return { organization: data.organization, user: data.user };
+  } catch (e) {
+    throw new Error(handleError(e));
+  }
+}
+
+export async function updateMyOrganization(body: {
+  name?: string;
+  slug?: string;
+}): Promise<{ organization: Organization }> {
+  try {
+    const res = await api.patch(API_ROUTES.ORGANIZATIONS.ME, body);
+    const data = res.data?.data as { organization?: Organization } | undefined;
+    if (!data?.organization?.id) throw new Error("Invalid response");
+    return { organization: data.organization };
+  } catch (e) {
+    throw new Error(handleError(e));
+  }
+}
+
+export async function leaveOrganization(): Promise<void> {
+  try {
+    await api.post(API_ROUTES.ORGANIZATIONS.ME_LEAVE, {});
+  } catch (e) {
+    throw new Error(handleError(e));
+  }
+}

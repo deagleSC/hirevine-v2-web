@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   generateJobPipeline,
@@ -44,7 +44,6 @@ const STATUSES: JobStatus[] = ["draft", "active", "paused", "closed"];
 
 export default function RecruiterJobEditPage() {
   const params = useParams();
-  const router = useRouter();
   const jobId = typeof params.jobId === "string" ? params.jobId : "";
   const { user } = useAuthStore();
 
@@ -441,27 +440,24 @@ export default function RecruiterJobEditPage() {
               ) : (
                 <p className="text-muted-foreground text-sm">—</p>
               )}
+
+              <div className="border-border border-t pt-6">
+                <p className="text-muted-foreground mb-3 text-xs leading-relaxed">
+                  Save title, description, and status from either tab before
+                  sharing the posting or generating the pipeline.
+                </p>
+                <Button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void onSave()}
+                >
+                  {saving ? "Saving…" : "Save changes"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href={`/jobs/${jobId}`}
-          className={cn(buttonVariants({ variant: "outline" }), "no-underline")}
-        >
-          Preview public job page
-        </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          className="text-muted-foreground"
-          onClick={() => router.push("/recruiter/jobs")}
-        >
-          Done
-        </Button>
-      </div>
     </div>
   );
 }

@@ -1,13 +1,12 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Briefcase,
-  Building2,
   FolderKanban,
   Home,
   Inbox,
   LayoutDashboard,
   LogIn,
   ScrollText,
+  Search,
 } from "lucide-react";
 
 import type { User } from "@/types/auth.types";
@@ -27,7 +26,6 @@ export function getMainNavItems(user: User | null): NavMainItem[] {
   if (!user) {
     return [
       { title: "Home", url: "/", icon: Home },
-      { title: "Browse jobs", url: "/jobs", icon: Briefcase },
       { title: "Sign in", url: "/login", icon: LogIn },
     ];
   }
@@ -35,7 +33,11 @@ export function getMainNavItems(user: User | null): NavMainItem[] {
   if (user.role === "candidate") {
     return [
       { title: "Home", url: "/candidate", icon: LayoutDashboard },
-      { title: "Browse jobs", url: "/jobs", icon: Briefcase },
+      {
+        title: "Browse jobs",
+        url: "/jobs",
+        icon: Search,
+      },
       {
         title: "My applications",
         url: "/candidate/applications",
@@ -46,11 +48,6 @@ export function getMainNavItems(user: User | null): NavMainItem[] {
 
   return [
     { title: "Home", url: "/recruiter", icon: LayoutDashboard },
-    {
-      title: "Organization",
-      url: "/recruiter/organization",
-      icon: Building2,
-    },
     { title: "Job posts", url: "/recruiter/jobs", icon: FolderKanban },
     { title: "Applications", url: "/recruiter/applications", icon: Inbox },
   ];

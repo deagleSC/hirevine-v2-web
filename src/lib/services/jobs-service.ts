@@ -3,18 +3,32 @@ import { api } from "@/lib/utils/api-client";
 import { handleError } from "@/lib/utils/handleError";
 import type { ApplicationRun } from "@/types/applications.types";
 import type {
+  ActiveJobsCatalogResponse,
   OrgJobOption,
   OrgJobsListResponse,
   PublicJob,
   RecruiterJob,
 } from "@/types/jobs.types";
 
-export async function browseJobs(): Promise<PublicJob[]> {
+/** Paginated active jobs for the public job board (`q` filters title). */
+export async function listActiveJobsCatalog(params?: {
+  page?: number;
+  limit?: number;
+  q?: string;
+}): Promise<ActiveJobsCatalogResponse> {
   try {
-    const res = await api.get(API_ROUTES.JOBS.BROWSE);
-    const jobs = (res.data?.data as { jobs?: PublicJob[] } | undefined)?.jobs;
-    if (!Array.isArray(jobs)) throw new Error("Invalid jobs response");
-    return jobs;
+    const res = await api.get(API_ROUTES.JOBS.CATALOG, {
+      params: {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 20,
+        ...(params?.q ? { q: params.q } : {}),
+      },
+    });
+    const data = res.data?.data as ActiveJobsCatalogResponse | undefined;
+    if (!data || !Array.isArray(data.jobs)) {
+      throw new Error("Invalid jobs catalog response");
+    }
+    return data;
   } catch (e) {
     throw new Error(handleError(e));
   }

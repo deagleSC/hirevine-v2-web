@@ -1,78 +1,52 @@
-import Link from "next/link";
-import { Briefcase, Building2, FolderKanban, Inbox } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button-variants";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Building2, FolderKanban, Inbox } from "lucide-react";
+import { DashboardQuickLinks } from "@/components/dashboard/dashboard-quick-links";
+import { RecruiterDashboardAnalytics } from "@/components/dashboard/recruiter-dashboard-analytics";
 
-const cards = [
+const recruiterQuickLinks = [
   {
-    title: "Organization",
-    description: "Create your employer org or review name and slug.",
     href: "/recruiter/organization",
+    title: "Organization",
+    hint: "Employer profile and slug",
     icon: Building2,
   },
   {
-    title: "Job posts",
-    description:
-      "Draft roles, publish to the board, generate hiring pipelines.",
     href: "/recruiter/jobs",
+    title: "Job posts",
+    hint: "Drafts, pipelines, publish",
     icon: FolderKanban,
   },
   {
-    title: "Applications",
-    description: "Org-wide applicant list with filters and pipeline detail.",
     href: "/recruiter/applications",
+    title: "Applications",
+    hint: "Org-wide list and filters",
     icon: Inbox,
-  },
-  {
-    title: "Public job board",
-    description: "Preview how candidates see active listings.",
-    href: "/jobs",
-    icon: Briefcase,
   },
 ] as const;
 
 export default function RecruiterHomePage() {
   return (
-    <div className="space-y-8">
-      <div>
+    <div className="flex flex-col gap-8">
+      <header>
         <h1 className="text-2xl font-semibold tracking-tight">Recruiter</h1>
         <p className="text-muted-foreground mt-1 max-w-2xl text-sm leading-relaxed">
-          Manage your organization, job posts, and applications from the
-          sidebar, or jump in below.
+          Manage your organization, job posts, and applications from the sidebar
+          or the shortcuts below.
         </p>
-      </div>
-      <ul className="grid gap-4 sm:grid-cols-2">
-        {cards.map(({ title, description, href, icon: Icon }) => (
-          <li key={href}>
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Icon className="size-5" />
-                  {title}
-                </CardTitle>
-                <CardDescription className="leading-relaxed">
-                  {description}
-                </CardDescription>
-                <Link
-                  href={href}
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "mt-2 w-fit no-underline",
-                  )}
-                >
-                  Open
-                </Link>
-              </CardHeader>
-            </Card>
-          </li>
-        ))}
-      </ul>
+      </header>
+
+      <DashboardQuickLinks items={recruiterQuickLinks} />
+
+      <section className="flex flex-col gap-5">
+        <div>
+          <h2 className="text-muted-foreground mb-2 text-[11px] font-semibold tracking-wide uppercase">
+            Analytics
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Application volume and pipeline mix for your organization.
+          </p>
+        </div>
+        <RecruiterDashboardAnalytics />
+      </section>
     </div>
   );
 }

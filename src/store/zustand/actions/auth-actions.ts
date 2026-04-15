@@ -64,4 +64,16 @@ export const authActions = {
       throw new Error(message);
     }
   },
+
+  /** PATCH `/api/auth/me` and update client session user. */
+  patchProfile: async (body: {
+    displayName?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }): Promise<User> => {
+    const { setUser } = useAuthStore.getState();
+    const user = await authServices.patchMe(body);
+    setUser(user);
+    return user;
+  },
 };

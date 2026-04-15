@@ -1,6 +1,6 @@
 export type JobStatus = "draft" | "active" | "paused" | "closed";
 
-/** Public job from `GET /api/jobs/browse` or active `GET /api/jobs/:id` (includes description; no pipeline). */
+/** Public job from active `GET /api/jobs/:id` (includes description; no pipeline). */
 export interface PublicJob {
   id: string;
   title: string;
@@ -22,6 +22,15 @@ export interface RecruiterJob extends PublicJob {
 /** `GET /api/jobs` paginated envelope. */
 export interface OrgJobsListResponse {
   jobs: RecruiterJob[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/** `GET /api/jobs/catalog` — active jobs only, public shape. */
+export interface ActiveJobsCatalogResponse {
+  jobs: PublicJob[];
   page: number;
   limit: number;
   total: number;

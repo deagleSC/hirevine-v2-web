@@ -11,10 +11,13 @@ export const API_ROUTES = {
   },
   ORGANIZATIONS: {
     CREATE: "/api/organizations",
+    JOIN: "/api/organizations/join",
     ME: "/api/organizations/me",
+    ME_LEAVE: "/api/organizations/me/leave",
   },
   JOBS: {
-    BROWSE: "/api/jobs/browse",
+    /** Anyone: paginated active jobs (`page`, `limit`, optional title `q`). */
+    CATALOG: "/api/jobs/catalog",
     /** Recruiter/admin: paginated org jobs (`page`, `limit`, `status`, `q`). */
     LIST_ORG: "/api/jobs",
     /** Recruiter/admin: id + title for up to 500 jobs (filters, dropdowns). */
@@ -31,6 +34,10 @@ export const API_ROUTES = {
   },
   APPLICATIONS: {
     ME: "/api/applications/me",
+    /** Recruiter/admin: dashboard chart aggregates for the signed-in org. */
+    ANALYTICS_ORG: "/api/applications/analytics/org",
+    /** Candidate: dashboard chart aggregates for the signed-in user. */
+    ANALYTICS_ME: "/api/applications/analytics/me",
     /** Recruiter/admin: paginated org applications (`page`, `limit`, `jobId`, `status`). */
     LIST_ORG: "/api/applications",
     BY_ID: (applicationId: string) => `/api/applications/${applicationId}`,
