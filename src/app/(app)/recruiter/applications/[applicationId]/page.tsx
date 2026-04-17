@@ -13,8 +13,7 @@ import {
 } from "@/lib/recruiter/pipeline-node-heading";
 import type { RecruiterApplicationDetail } from "@/types/applications.types";
 import { buttonVariants } from "@/components/ui/button-variants";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { HiringSummaryMarkdown } from "@/components/applications/hiring-summary-markdown";
 import {
   Card,
   CardContent,
@@ -173,11 +172,9 @@ export default function RecruiterApplicationDetailPage() {
                   {n.reasoning &&
                     (n.nodeIndex === 3 ? (
                       <div className="mt-3 rounded-md bg-background/40 p-3 shadow-xs">
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {n.reasoning}
-                          </ReactMarkdown>
-                        </div>
+                        <HiringSummaryMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+                          {n.reasoning}
+                        </HiringSummaryMarkdown>
                       </div>
                     ) : (
                       <p className="text-muted-foreground mt-3 whitespace-pre-wrap leading-relaxed">
