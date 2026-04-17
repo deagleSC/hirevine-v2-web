@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobPipelineFlow } from "@/components/jobs/job-pipeline-flow";
+import { MessageResponse } from "@/components/ai-elements/message";
 import { cn } from "@/lib/utils";
 
 function formatWhen(iso?: string) {
@@ -168,11 +169,18 @@ export default function RecruiterApplicationDetailPage() {
                       </span>
                     )}
                   </div>
-                  {n.reasoning && (
-                    <p className="text-muted-foreground mt-3 whitespace-pre-wrap leading-relaxed">
-                      {n.reasoning}
-                    </p>
-                  )}
+                  {n.reasoning &&
+                    (n.nodeIndex === 3 ? (
+                      <div className="mt-3 rounded-md bg-background/40 p-3 shadow-xs">
+                        <MessageResponse className="not-prose text-sm leading-relaxed">
+                          {n.reasoning}
+                        </MessageResponse>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground mt-3 whitespace-pre-wrap leading-relaxed">
+                        {n.reasoning}
+                      </p>
+                    ))}
                 </li>
               ))}
             </ul>
