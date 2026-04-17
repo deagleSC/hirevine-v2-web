@@ -13,6 +13,8 @@ import {
 } from "@/lib/recruiter/pipeline-node-heading";
 import type { RecruiterApplicationDetail } from "@/types/applications.types";
 import { buttonVariants } from "@/components/ui/button-variants";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Card,
   CardContent,
@@ -22,7 +24,6 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobPipelineFlow } from "@/components/jobs/job-pipeline-flow";
-import { MessageResponse } from "@/components/ai-elements/message";
 import { cn } from "@/lib/utils";
 
 function formatWhen(iso?: string) {
@@ -172,9 +173,11 @@ export default function RecruiterApplicationDetailPage() {
                   {n.reasoning &&
                     (n.nodeIndex === 3 ? (
                       <div className="mt-3 rounded-md bg-background/40 p-3 shadow-xs">
-                        <MessageResponse className="not-prose text-sm leading-relaxed">
-                          {n.reasoning}
-                        </MessageResponse>
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {n.reasoning}
+                          </ReactMarkdown>
+                        </div>
                       </div>
                     ) : (
                       <p className="text-muted-foreground mt-3 whitespace-pre-wrap leading-relaxed">
